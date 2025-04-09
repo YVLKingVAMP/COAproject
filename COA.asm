@@ -17,6 +17,7 @@ include irvine32.inc
     discount_price DWORD   0            ;discount price (total price * discount rate)
     tax_price      DWORD   0            ;tax price (total price * tax rate)
     final_price    DWORD   0            ;final price (total price + tax rate - discount rate)
+    floating_point DWORD   0            ;floating point number
     
 
     ; Prompts for main menu
@@ -402,30 +403,49 @@ calc_tax_price:
     mov eax, tax_rate                   ;eax = taxrate
     mul total_price                     ;eax = taxrate * ((flight price + class price) * number of tickets)
     mov ebx,100
-    div ebx                             ;
+    div ebx                             
+    mov floating_point,edx
     mov tax_price,eax                   ;tax price = taxrate * ((flight price + class price) * number of tickets)
+    add eax,total_price                 ;eax = tax price + total price
+    mov total_price,eax                 ;total price = tax price + total price
     jmp calc_discount_price
 
 calc_discount_price:
     mov eax, discount_rate              ;eax = discountrate
-    mul total_price                     ;eax = discountrate * ((flight price + class price) * number of tickets)
+    mul total_price                     ;eax = discountrate * (((flight price + class price) * number of tickets)+tax price)
     mov ebx,100
-    div ebx                             ;
+    div ebx                             
+    mov floating_point,edx
     mov discount_price,eax              ;discount price = discountrate * ((flight price + class price) * number of tickets)
     jmp calc_final_price
 
 calc_final_price:
-    mov eax, total_price                ;eax = total price
-    add eax, tax_price                  ;eax = total price + tax price
+    mov eax, total_price                ;eax = total price + tax price
     sub eax, discount_price             ;eax = total price + tax price - discount price
     mov final_price, eax                ;final price = total price + tax price - discount price
-    lea edx, final_price
-    call WriteDec
-    jmp book_another
+    cmp floating_point,0
+    ja adjust_floating_point
+
+adjust_floating_point:
+    mov eax, 100
+    sub eax,floating_point
+    mov floating_point,eax
+    jmp adjust_final_price
     
+adjust_final_price:
+    mov eax, final_price
+    sub eax, 1
+    mov final_price, eax
+    jmp book_another
+
+
 view_receipt:
     mov eax, final_price
     call WriteDec
+    mov al,'.'
+    call WriteChar
+    mov eax, floating_point             ;eax = floating point number
+    call writeDec
     mov edx, OFFSET receipt_msg
     call WriteString
     jmp user_menu_loop
