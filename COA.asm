@@ -7,29 +7,31 @@ include irvine32.inc
     user_count     DWORD   0            ; Number of registered users
     flight_price   DWORD   0            ;price of flight
     class_price    DWORD   0            ;price of class
-    date_input     DWORD   0			;date of flight 
     ticket_input   DWORD   0            ;number of tickets
     name_input     BYTE    10 DUP(256 DUP(0))    ;Array of name of passengers
     passport_input DWORD   10 DUP(0)    ;Array of passport number of passengers
     discount_rate  DWORD   0            ;discount rate
     tax_rate       DWORD   0            ;tax rate
     total_price    DWORD   0            ;total price (flight price + class price) * number of tickets)
+    total_price_after_tax DWORD   0     ;total price after tax (total price + tax price)
     discount_price DWORD   0            ;discount price (total price * discount rate)
     tax_price      DWORD   0            ;tax price (total price * tax rate)
     final_price    DWORD   0            ;final price (total price + tax rate - discount rate)
     floating_point DWORD   0            ;floating point number
+    nextline       BYTE   0dh,0ah,0
+    options        BYTE    4 DUP(0) ; Array to store options for flight booking
     
 
     ; Prompts for main menu
     main_menu        BYTE   "1. Register",0dh,0ah,
                             "2. Login",0dh,0ah,
                             "3. Exit",0dh,0ah,
-                            "Choice:[1-3] ",0
+                            "Choice[1-3]: ",0
 
     reg_id_prompt    BYTE  "Enter 4-digit User ID: ",0
     reg_pw_prompt    BYTE  "Enter 4-digit Password: ",0
-    login_id_prompt  BYTE "Enter 4-digit User ID: ",0
-    login_pw_prompt  BYTE "Enter 4-digit Password: ",0
+    login_id_prompt  BYTE  "Enter 4-digit User ID: ",0
+    login_pw_prompt  BYTE  "Enter 4-digit Password: ",0
     success_msg      BYTE  "Success!",0dh,0ah,0
     fail_msg         BYTE  "Failure!",0dh,0ah,0
     exists_msg       BYTE  "User ID already exists!",0dh,0ah,0
@@ -44,10 +46,10 @@ include irvine32.inc
                            "Choice[1-4]: ",0
 
     booking_menu     BYTE  "Please select a flight: ",0dh,0ah,
-                           "1. Kuala Lumpur - Beijing    RM1000",0dh,0ah,
-                           "2.Kuala Lumpur - Los Angeles RM5000",0dh,0ah,
-                           "3.Kuala Lumpur - Sarawak     RM100",0dh,0ah,
-                           "4. Kuala Lumpur - Paris      RM2500",0dh,0ah,
+                           "1. Kuala Lumpur - Beijing     RM1000",0dh,0ah,
+                           "2. Kuala Lumpur - Los Angeles RM5000",0dh,0ah,
+                           "3. Kuala Lumpur - Sarawak     RM100",0dh,0ah,
+                           "4. Kuala Lumpur - Paris       RM2500",0dh,0ah,
                            "Choice[1-4]: ",0
 
     class_menu       BYTE  "PLease select a class: ",0dh,0ah,
@@ -80,13 +82,61 @@ include irvine32.inc
                                "2. No",0dh,0ah,
                                "Choice[1-2]: ",0
 
-    receipt_msg      BYTE  "View Receipt Selected - Feature Under Development!",0dh,0ah,0
+    booking_option1  BYTE  "Kuala Lumpur - Beijing ",0
+    booking_option2  BYTE  "Kuala Lumpur - Los Angeles ",0
+    booking_option3  BYTE  "Kuala Lumpur - Sarawak ",0
+    booking_option4  BYTE  "Kuala Lumpur - Paris ",0
+    booking_option5  BYTE  "Kuala Lumpur - London ",0
+    booking_option6  BYTE  "Kuala Lumpur - New York ",0
+    booking_option7  BYTE  "Kuala Lumpur - Tokyo ",0
+    booking_option8  BYTE  "Kuala Lumpur - Sydney ",0
+    booking_option9  BYTE  "Kuala Lumpur - Melbourne ",0
+    booking_option10 BYTE  "Kuala Lumpur - Singapore ",0
+
+    booking_option1_price BYTE "RM1000 ",0
+    booking_option2_price BYTE "RM5000 ",0
+    booking_option3_price BYTE "RM100 ",0
+    booking_option4_price BYTE "RM2500 ",0
+    booking_option5_price BYTE "RM2000 ",0
+    booking_option6_price BYTE "RM3000 ",0
+    booking_option7_price BYTE "RM1500 ",0
+    booking_option8_price BYTE "RM1800 ",0
+    booking_option9_price BYTE "RM2200 ",0
+    booking_option10_price BYTE "RM1200 ",0
+
+
+    class_option1   BYTE  "Economy ",0
+    class_option2   BYTE  "Premium Economy ",0
+    class_option3   BYTE  "Business ",0
+    class_option4   BYTE  "First ",0
+
+    date_option1   BYTE  "30 May 2025 ",0
+    date_option2   BYTE  "6 June 2025 ",0
+    date_option3   BYTE  "22 June 2025 ",0
+    date_option4   BYTE  "20 July 2025 ",0
+    date_option5   BYTE  "31 July 2025 ",0
+    date_option6   BYTE  "2 August 2025 ",0
+    date_option7   BYTE  "11 October 2025 ",0
+    date_option8   BYTE  "2 November 2025 ",0
+    date_option9   BYTE  "23 November 2025 ",0
+    date_option10  BYTE  "24 December 2025 ",0
+
+    receipt_booking BYTE  100 DUP(0) 
+    receipt_class   BYTE  100 DUP(0)
+    receipt_date    BYTE  100 DUP(0)
+    receipt_pax	    BYTE  "pax ",0
+    receipt_tax     BYTE  "Tax: ",0
+    receipt_discount BYTE  "Discount: ",0
+    receipt_total   BYTE  "Total: ",0
+    receipt_date_msg BYTE  "Flight Date: ",0
+
     payment_msg      BYTE  "Make Payment Selected - Feature Under Development!",0dh,0ah,0
 
 .code
 main proc
 menu_loop:
-    ; Display main menu
+    lea edx, nextline
+    call WriteString
     mov edx, OFFSET main_menu 
     call WriteString
     
@@ -201,6 +251,8 @@ login_success:
     
     ; After successful login, show user menu
 user_menu_loop:
+    lea edx, nextline
+    call WriteString
     mov edx, OFFSET user_menu
     call WriteString
     
@@ -219,6 +271,8 @@ user_menu_loop:
     jmp user_menu_loop
 
 flight_selection:
+    lea edx, nextline
+    call WriteString
     mov edx, OFFSET booking_menu
     call WriteString
 
@@ -239,11 +293,17 @@ flight_selection:
 flightprice1:
     mov eax,1000
     mov flight_price,eax
+    lea esi, booking_option1
+    lea edi, receipt_booking
+    call copystring
     jmp class_selection
 
 flightprice2:
     mov eax,5000
     mov flight_price,eax
+    lea esi, booking_option2
+    lea edi, receipt_booking
+    call copystring
     jmp class_selection
 
 ;domestic flight 
@@ -252,14 +312,22 @@ flightprice3:
     mov flight_price,eax
     mov eax,8
     mov tax_rate,eax
+    lea esi, booking_option3
+    lea edi, receipt_booking
+    call copystring
     jmp class_selection
 
 flightprice4:
     mov eax,2500
     mov flight_price,eax
+    lea esi, booking_option4
+    lea edi, receipt_booking
+    call copystring
     jmp class_selection
 
 class_selection:
+    lea edx, nextline
+    call WriteString
     mov edx, OFFSET class_menu
     call WriteString
     
@@ -280,40 +348,82 @@ class_selection:
 classprice1:
     mov eax,0
     mov class_price,eax
+    lea esi, class_option1
+    lea edi, receipt_class
+    call copystring
     jmp date_selection
 
 classprice2:
     mov eax,50
     mov class_price,eax
+    lea esi, class_option2
+    lea edi, receipt_class
+    call copystring
     jmp date_selection
 
 classprice3:
     mov eax,100
     mov class_price,eax
+    lea esi, class_option3
+    lea edi, receipt_class
+    call copystring
     jmp date_selection
 
 classprice4:
     mov eax,1000
     mov class_price,eax
+    lea esi, class_option4
+    lea edi, receipt_class
+    call copystring
     jmp date_selection
 
 date_selection:
+    lea edx, nextline
+    call WriteString
     mov edx, OFFSET date_menu
     call WriteString
     
     ;Get user choice
     call ReadDec
-    mov date_input,eax
+    cmp eax,1
+    je date1
+    cmp eax,2
+    je date2
+    cmp eax,3
+    je date3
     cmp eax,4
-    jg error_msg
-    jmp number_of_tickets
-
-error_msg:
+    je date4
     mov edx, OFFSET invalid_choice
     call WriteString
-    jmp date_selection
+    jmp number_of_tickets
+
+date1:
+    lea esi, date_option1
+    lea edi, receipt_date
+    call copystring
+    jmp number_of_tickets
+
+date2:
+    lea esi, date_option2
+    lea edi, receipt_date
+    call copystring
+    jmp number_of_tickets
+
+date3:
+    lea esi, date_option3
+    lea edi, receipt_date
+    call copystring
+    jmp number_of_tickets
+
+date4:
+    lea esi, date_option4
+    lea edi, receipt_date
+    call copystring
+    jmp number_of_tickets
 
 number_of_tickets:
+    lea edx, nextline
+    call WriteString
     mov edx, OFFSET ticket_menu
     call WriteString
     
@@ -354,6 +464,8 @@ passportesi:
     jmp passportID
 
 membership_validation:
+    lea edx, nextline
+    call WriteString
     mov edx, OFFSET membership_menu
     call WriteString
     
@@ -378,6 +490,8 @@ membership_no:
     jmp calc_total_price
 
 book_another:
+    lea edx, nextline
+    call WriteString
     mov edx, OFFSET book_another_menu
     call WriteString
 
@@ -407,12 +521,12 @@ calc_tax_price:
     mov floating_point,edx
     mov tax_price,eax                   ;tax price = taxrate * ((flight price + class price) * number of tickets)
     add eax,total_price                 ;eax = tax price + total price
-    mov total_price,eax                 ;total price = tax price + total price
+    mov total_price_after_tax,eax       ;total price = tax price + total price
     jmp calc_discount_price
 
 calc_discount_price:
     mov eax, discount_rate              ;eax = discountrate
-    mul total_price                     ;eax = discountrate * (((flight price + class price) * number of tickets)+tax price)
+    mul total_price_after_tax           ;eax = discountrate * (((flight price + class price) * number of tickets)+tax price)
     mov ebx,100
     div ebx                             
     mov floating_point,edx
@@ -420,11 +534,12 @@ calc_discount_price:
     jmp calc_final_price
 
 calc_final_price:
-    mov eax, total_price                ;eax = total price + tax price
+    mov eax, total_price_after_tax      ;eax = total price + tax price
     sub eax, discount_price             ;eax = total price + tax price - discount price
     mov final_price, eax                ;final price = total price + tax price - discount price
     cmp floating_point,0
     ja adjust_floating_point
+    jmp book_another
 
 adjust_floating_point:
     mov eax, 100
@@ -440,15 +555,67 @@ adjust_final_price:
 
 
 view_receipt:
+    lea edx, nextline
+    call WriteString
+
+    mov edx, OFFSET receipt_date_msg
+    call WriteString
+    mov edx, OFFSET receipt_date
+    call WriteString
+    lea edx, nextline
+    call WriteString
+    mov edx, OFFSET receipt_booking
+    call WriteString
+    mov eax, ticket_input
+    call Writedec
+    mov edx, OFFSET receipt_pax
+    call WriteString
+    mov eax,flight_price
+    mul ticket_input
+    call writedec
+    lea edx,nextline
+    call writeString
+    mov edx, OFFSET receipt_class
+    call WriteString
+    mov eax, ticket_input
+    call Writedec
+    mov edx, OFFSET receipt_pax
+    call WriteString
+    mov eax,class_price
+    mul ticket_input
+    call writedec
+    lea edx,nextline
+    call writeString
+    mov edx, OFFSET receipt_tax
+    call WriteString
+    mov eax, tax_price
+    call WriteDec
+    lea edx,nextline
+    call writeString
+    mov edx, OFFSET receipt_discount
+    call WriteString
+    mov eax, discount_price
+    call WriteDec
+    lea edx,nextline
+    call writeString
+    mov edx, OFFSET receipt_total
+    call WriteString
     mov eax, final_price
     call WriteDec
+    cmp floating_point,0
+    ja display_floating_point
+    lea edx,nextline
+    call writeString
+    jmp book_another
+
+display_floating_point:
     mov al,'.'
     call WriteChar
     mov eax, floating_point             ;eax = floating point number
     call writeDec
-    mov edx, OFFSET receipt_msg
-    call WriteString
-    jmp user_menu_loop
+    jmp book_another
+    
+    
 
 make_payment:
     mov edx, OFFSET payment_msg
@@ -461,4 +628,56 @@ exit_program:
     exit
     
 main endp
+
+copystring proc
+CopyLoop:
+    mov al, [esi]           ; Load a byte from source
+    mov [edi], al           ; Store it in destination
+    inc esi                 ; Move to next character in source
+    inc edi                 ; Move to next position in destination
+    cmp al, 0               ; Check for null terminator
+    jne CopyLoop            ; If not null, keep copying
+    ret
+copystring endp
+
+randomizer proc
+    call Randomize
+    xor ecx,ecx
+
+GenLoop:
+    mov eax,10
+    call RandomRange
+
+    mov esi,OFFSET options
+    mov ebx,ecx
+    mov edi,eax
+
+Checkduplicate:
+    cmp ebx,0
+    je StoreIt
+
+    mov al,[esi]
+    cmp al,dl
+    je GenLoop
+
+    inc esi
+    dec ebx
+    jmp Checkduplicate
+
+StoreIt:
+    mov esi,OFFSET options
+    add esi,ecx
+    mov [esi],dl
+    call WriteDec
+    mov al,' '
+    call Writechar
+
+    inc ecx
+    cmp ecx,4
+    jne GenLoop
+
+
+
+    ret
+randomizer endp
 end main
