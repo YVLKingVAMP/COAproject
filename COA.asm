@@ -33,7 +33,9 @@ include irvine32.inc
     selection      db      1
     var           DWORD  0
     user_input    DWORD  0
-    memberships   BYTE   10 DUP("TMURAT1",0,0,0,0,0,0,0,0,0)
+    memberships   BYTE   "TMURAT1",0,"TMURAT2",0,"TMURAT3",0,0
+    member_input  BYTE   100 DUP(?)
+    member_found  DWORD   0
     
 
     main_menu        BYTE   "1. Register",0dh,0ah,
@@ -53,7 +55,7 @@ include irvine32.inc
 
     ;Usermenu after logging in
     user_menu        BYTE  "1. Flight Booking",0dh,0ah,
-                           "2. View Receipt",0dh,0ah,
+                           "2. View Booking Details",0dh,0ah,
                            "3. Make Payment",0dh,0ah,
                            "4. Exit",0dh,0ah,
                            "Choice[1-4]: ",0
@@ -100,8 +102,11 @@ include irvine32.inc
                            "1. Yes",0dh,0ah,
                            "2. No",0dh,0ah,
                            "Choice[1-2]: ",0
+
+    membership_prompt   BYTE  "Enter MembershipID: ",0
+    membership_error   BYTE  "Invalid MembershipID",0dh,0ah,0
     
-    book_another_menu   BYTE  "Do you want to book another flight? ",0dh,0ah,
+    book_new_menu   BYTE  "Do you want to book a new flight? ",0dh,0ah,
                                "1. Yes",0dh,0ah,
                                "2. No",0dh,0ah,
                                "Choice[1-2]: ",0
@@ -155,7 +160,14 @@ include irvine32.inc
     receipt_name    BYTE    "Name",0
     receipt_passport BYTE   "PassportID",0
 
-    payment_msg      BYTE  "Make Payment Selected - Feature Under Development!",0dh,0ah,0
+    payment_menu     BYTE  "Select Payment Method:",0dh,0ah,
+                           "1. Online Banking",0dh,0ah,
+                           "2. Credit/Debit Card",0dh,0ah,
+                           "Choice[1-2]: ",0
+    online_banking_msg BYTE "Processing payment via Online Banking...",0dh,0ah,0
+    credit_debit_msg  BYTE "Processing payment via Credit/Debit Card...",0dh,0ah,0
+    payment_success_msg BYTE "Payment Successful!",0dh,0ah,0
+
 
 .code
 main proc
@@ -289,7 +301,7 @@ usermenu:
     cmp eax, 1
     je flight_selection
     cmp eax, 2
-    je view_receipt
+    je view_booking_details
     cmp eax, 3
     je make_payment
     cmp eax, 4
@@ -316,12 +328,17 @@ flight_selection:
     dec eax           ;0 to 3
     cmp eax,4
     je back_usermenu
+    cmp eax,5
+    ja flight_error_msg
     mov ecx,eax
     mov user_input,eax
     jmp flightprice
+
+flight_error_msg:
     mov edx, OFFSET invalid_choice
     call WriteString
     jmp flight_selection
+    
 
 back_usermenu:
     jmp usermenu
@@ -433,7 +450,7 @@ baggage_selection:
     call WriteString
     jmp baggage_selection
 
-back_class_seleciton:
+back_class_selection:
     jmp class_selection
 
 baggageprice1:
@@ -497,17 +514,23 @@ date_selection:
     ;Get user choice
     call ReadDec      ;1 to 4
     dec eax           ;0 to 3
+    cmp eax,4
+    je baggage_selection
+    cmp eax,5
+    ja date_error_msg
     mov ecx,eax
     mov user_input,eax
     jmp date
-    cmp eax,4
-    je class_selection
+    
+    
+
+date_error_msg:
     mov edx, OFFSET invalid_choice
     call WriteString
     jmp date_selection
 
-back_class_selection:
-    jmp class_selection
+back_baggage_selection:
+    jmp baggage_selection
 
 date:
     mov esi,OFFSET options
@@ -540,7 +563,7 @@ ticket_error_msg:
     
 enter_credenstial:
     cmp esi,ticket_input        
-    jge membership_validation
+    jge membership_selection
 
     mov edx, OFFSET name_menu
     call WriteString
@@ -561,38 +584,43 @@ enter_credenstial:
     inc esi
     jmp enter_credenstial
 
-membership_validation:
+membership_selection:
     lea edx, logo
     call writestring
-    call crlf
     mov edx, OFFSET membership_menu
     call WriteString
     
     ;Get user choice
     call ReadDec
     cmp eax,1
-    je membership_yes
+    je membership_validation
     cmp eax,2
     je membership_no
     mov edx, OFFSET invalid_choice
     call WriteString
-    jmp membership_validation
-
-membership_yes:
-    mov eax, 5
-    mov discount_rate,eax
-    jmp calc_total_price
+    jmp membership_selection
 
 membership_no:
     mov eax, 0
     mov discount_rate,eax
     jmp calc_total_price
 
-book_another:
+membership_validation:
+    mov edx, OFFSET membership_prompt
+    call WriteString
+    call membership_validation_check
+    mov eax,discount_rate
+    cmp eax,0
+    je membership_selection
+    jne calc_total_price
+
+book_new:
+    mov eax, 0
+    mov discount_rate,eax
     lea edx, logo
     call writestring
     call crlf
-    mov edx, OFFSET book_another_menu
+    mov edx, OFFSET book_new_menu
     call WriteString
 
     ;Get user choice
@@ -604,7 +632,7 @@ book_another:
     je usermenu
     mov edx, OFFSET invalid_choice
     call WriteString
-    jmp book_another
+    jmp book_new
 
 calc_total_price:
     mov eax, OFFSET total_price         ;eax = total price
@@ -657,7 +685,7 @@ adjust_final_price:
     jmp usermenu
 
 
-view_receipt:
+view_booking_details:
     lea edx, logo
     call writestring
     call crlf
@@ -762,8 +790,8 @@ view_receipt:
     call WriteDec
     mov al,'.'
     call WriteChar
-    mov eax,discount_floating_point             ;eax = floating point number
-    call writeDec
+    mov eax,discount_floating_point             
+    call adjust_discount_floating_point
     call crlf
     mov edx, OFFSET receipt_total
     call WriteString
@@ -778,21 +806,69 @@ view_receipt:
     call WriteDec
     mov al,'.'
     call WriteChar
-    mov eax,final_price_floating_point             ;eax = floating point number
-    call writeDec
+    mov eax,final_price_floating_point             
+    call adjust_final_floating_point
     call crlf
     mov esi,0
     call printreceiptnameandpassport
-    jmp book_another
-
-    
-    
+    jmp book_new
 
 make_payment:
-    mov edx, OFFSET payment_msg
-    call WriteString
-    jmp usermenu
+    lea edx, logo
+    call writestring
+    call crlf
 
+    ; Display total price
+    mov edx, OFFSET receipt_total
+    call WriteString
+    lea edx, tabline
+    call writestring
+    call writestring
+    call writestring
+    call writestring
+    lea edx, RM
+    call writestring
+    mov eax, final_price
+    call WriteDec
+    mov al, '.'
+    call WriteChar
+    mov eax, final_price_floating_point
+    call WriteDec
+    call crlf
+    call crlf
+
+    ; Display payment method menu
+    mov edx, OFFSET payment_menu
+    call WriteString
+
+    ; Get user choice
+    call ReadDec
+    cmp eax, 1
+    je online_banking
+    cmp eax, 2
+    je credit_debit_card
+    cmp eax, 5
+    je usermenu
+    mov edx, OFFSET invalid_choice
+    call WriteString
+    jmp make_payment
+
+    online_banking:
+    mov edx, OFFSET online_banking_msg
+    call WriteString
+    jmp process_payment
+
+credit_debit_card:
+    mov edx, OFFSET credit_debit_msg
+    call WriteString
+    jmp process_payment
+
+process_payment:
+    ; Simulate payment processing
+    mov edx, OFFSET payment_success_msg
+    call WriteString
+    call crlf
+    jmp usermenu
 
 
 exit_program:
@@ -937,5 +1013,117 @@ return:
 
 printreceiptnameandpassport endp
 
+membership_validation_check proc
+
+    mov member_found, 0   
+    mov edx, OFFSET member_input
+    mov ecx, 100
+    call ReadString
+
+    mov esi, OFFSET memberships
+
+CheckLoop:
+    cmp byte ptr [esi], 0
+    je CheckResult  ; End of membership list
+
+    mov edi, OFFSET member_input
+    push esi
+    call compare_strings
+    pop esi
+
+    cmp eax, 0
+    jne SkipCurrent
+
+    ; Match found
+    mov member_found, 1
+    jmp CheckResult
+
+SkipCurrent:
+    ; Skip to next null-terminated string
+SkipToNext:
+    cmp byte ptr [esi], 0
+    je Advance
+    inc esi
+    jmp SkipToNext
+
+Advance:
+    inc esi
+    jmp CheckLoop
+
+CheckResult:
+    cmp member_found, 1
+    je membership_yes
+
+    ; No match found
+    mov edx, OFFSET membership_error
+    call WriteString
+    jmp membership_no
+
+membership_yes:
+    mov eax,5
+    mov discount_rate,eax
+    ret
+
+membership_no:
+    mov eax,0
+    mov discount_rate,eax
+    ret
+    
+
+membership_validation_check endp
+
+compare_strings proc
+
+compare_loop:
+    mov al, [esi]        ; load char from first string
+    mov bl, [edi]        ; load char from second string
+    cmp al, bl
+    jne not_equal        ; chars differ
+    cmp al, 0
+    je strings_equal     ; both hit null terminator
+    inc esi
+    inc edi
+    jmp compare_loop
+
+strings_equal:
+    xor eax,eax        ; return 0 = equal
+    ret
+
+not_equal:
+    mov eax, 1           ; return 1 = not equal
+    ret
+compare_strings endp
+
+adjust_discount_floating_point proc
+
+    cmp eax,0
+    ja adjust
+    mov eax,discount_floating_point
+    call writedec
+    call writedec
+    ret
+
+adjust:
+    mov eax,discount_floating_point
+    call writedec
+    ret
+
+adjust_discount_floating_point endp
+
+adjust_final_floating_point proc
+
+    cmp eax,0
+    ja adjust
+    mov eax,final_price_floating_point
+    call writedec
+    call writedec
+    ret
+
+adjust:
+    mov eax,final_price_floating_point
+    call writedec
+    ret
+
+adjust_final_floating_point endp
 
 end main
