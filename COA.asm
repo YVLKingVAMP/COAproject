@@ -5,71 +5,66 @@ include irvine32.inc
     user_ids       DWORD   10 DUP(0)    ; Array of 10 DWORDs initialized to 0
     passwords      DWORD   10 DUP(0)    ; Array of 10 DWORDs initialized to 0
     user_count     DWORD   0            ; Number of registered users
-    flight_price   DWORD   0            ;price of flight
-    class_price    DWORD   0            ;price of class
-    baggage_price  DWORD   0            ;price of baggage
+    flight_price   DWORD   0            
+    class_price    DWORD   0            
+    baggage_price  DWORD   0            
     baggage_weight DWORD   0
-    baggage_price_rate DWORD 10
+    baggage_price_rate DWORD 10         ;extra baggage price of Rm10 per kg
     ticket_input   DWORD   0            ;number of tickets
-    nameArray    BYTE 200 DUP(?)      ; 10 names × 20 bytes each
-    passportArray    BYTE 200 DUP(?)      ; 10 passports × 20 bytes each
-    discount_rate  DWORD   0            ;discount rate
-    tax_rate       DWORD   0            ;tax rate
-    total_price    DWORD   0            ;total price (flight price + class price + baggage_price) * number of tickets)
-    total_price_after_tax DWORD   0     ;total price after tax (total price + tax price)
-    discount_price DWORD   0            ;discount price (total price * discount rate)
-    tax_price      DWORD   0            ;tax price (total price * tax rate)
-    final_price    DWORD   0            ;final price (total price + tax rate - discount rate)
-    discount_floating_point DWORD   0            ;floating point number
-    tax_floating_point DWORD   0            ;floating point number
-    flight_price_floating_point DWORD   0            ;floating point number
-    class_price_floating_point DWORD   0            ;floating point number
-    baggage_price_floating_point DWORD 0
-    final_price_floating_point DWORD   0            ;floating point number
+    nameArray      BYTE 200 DUP(?)      ;200 bytes for names
+    passportArray  BYTE 200 DUP(?)      ;200 bytes for passportIDs
+    discount_rate  DWORD   0            
+    tax_rate       DWORD   0            
+    total_price    DWORD   0            ;(flight price + class price + baggage_price) * number of tickets)
+    total_price_after_tax DWORD   0     ;total price + tax price
+    discount_price DWORD   0            ;total price * discount rate
+    tax_price      DWORD   0            ;total price * tax rate
+    final_price    DWORD   0            ;total price after tax - discount rate
+    discount_floating_point      DWORD   0            
+    tax_floating_point           DWORD   0            
+    flight_price_floating_point  DWORD   0            
+    class_price_floating_point   DWORD   0            
+    baggage_price_floating_point DWORD   0
+    final_price_floating_point   DWORD   0            
     tabline		   BYTE    09h,0
     RM             BYTE    "RM",0
     KG             BYTE    "KG",0
     options        DWORD    4 DUP(0) ; Array to store options for flight booking  
-    selection      db      1
-    var           DWORD  0
-    user_input    DWORD  0
-    memberships   BYTE   "TMURAT1",0,"TMURAT2",0,"TMURAT3",0,0
-    member_input  BYTE   100 DUP(?)
-    member_found  DWORD   0
-    
-
-    main_menu        BYTE   "1. Register",0dh,0ah,
-                            "2. Login",0dh,0ah,
-                            "3. Exit",0dh,0ah,
-                            "Choice[1-3]: ",0
-
-    reg_id_prompt    BYTE  "Enter 4-digit User ID: ",0
-    reg_pw_prompt    BYTE  "Enter 4-digit Password: ",0
-    login_id_prompt  BYTE  "Enter 4-digit User ID: ",0
-    login_pw_prompt  BYTE  "Enter 4-digit Password: ",0
-    success_msg      BYTE  "Success!",0dh,0ah,0
-    fail_msg         BYTE  "Failure!",0dh,0ah,0
-    exists_msg       BYTE  "User ID already exists!",0dh,0ah,0
-    invalid_msg      BYTE  "Must be 4 digits!",0dh,0ah,0
-    invalid_choice   BYTE  "Invalid choice",0dh,0ah,0
-
-    ;Usermenu after logging in
-    user_menu        BYTE  "1. Flight Booking",0dh,0ah,
-                           "2. View Booking Details",0dh,0ah,
-                           "3. Make Payment",0dh,0ah,
-                           "4. Exit",0dh,0ah,
-                           "Choice[1-4]: ",0
+    selection      BYTE    1
+    var            DWORD   0
+    user_input     DWORD   0
+    memberships    BYTE   "TMURAT1",0,"TMURAT2",0,"TMURAT3",0,"!",0
+    member_input   BYTE    100 DUP(?)
+    member_found   DWORD   0
 
     logo            BYTE    "_____                 __        _____",0dh,0ah,
                             "  |   |\    /| |   | |  \   /\    |  ",0dh,0ah,
                             "  |   | \  / | |   | |__/  /__\   |  ",0dh,0ah,
                             "  |   |  \/  | \___/ |  \ /    \  |  ",0dh,0ah,
                             "-------------------------------------",0dh,0ah,0
+    
+    main_menu        BYTE   "1. Register",0dh,0ah,
+                            "2. Login",0dh,0ah,
+                            "3. Exit",0dh,0ah,
+                            "Choice[1-3]: ",0
+
+    id_prompt        BYTE  "Enter 4-digit User ID: ",0
+    pw_prompt        BYTE  "Enter 4-digit Password: ",0
+    success_msg      BYTE  "Success!",0dh,0ah,0
+    fail_msg         BYTE  "Failure!",0dh,0ah,0
+    exists_msg       BYTE  "User ID already exists!",0dh,0ah,0
+    invalid_msg      BYTE  "Must be 4 digits!",0dh,0ah,0
+    invalid_choice   BYTE  "Invalid choice",0dh,0ah,0
+
+    user_menu        BYTE  "1. Flight Booking",0dh,0ah,
+                           "2. View Booking Details",0dh,0ah,
+                           "3. Make Payment",0dh,0ah,
+                           "4. Exit",0dh,0ah,
+                           "Choice[1-4]: ",0
 
     flight_menu     BYTE   "Please select a flight: ",0dh,0ah,0
     choice_menu     BYTE   "Choice[1-4]: ",0
                            
-
     class_menu       BYTE  "Please select a class: ",0dh,0ah,
                            "1. Economy           RM0",0dh,0ah,
                            "2. Premium Economy   RM50",0dh,0ah,
@@ -85,17 +80,11 @@ include irvine32.inc
                            "Choice[1-4]: ",0
 
     baggage_manual   BYTE  "Please enter extra baggage weight(max 50kg): ",0
-    
     baggage_error    BYTE  "Invalid weight",0dh,0ah,0
-
     ticket_error     BYTE  "Please enter at least 1",0
-
     date_menu        BYTE  "Please select a date: ",0dh,0ah,0
-
     ticket_menu      BYTE  "Please enter number of tickets: ",0
-
     name_menu        BYTE  "Please enter name: ",0
-
     passport_menu    BYTE  "Please enter passportID: ",0
 
     membership_menu  BYTE  "Do you have membership? ",0dh,0ah,
@@ -144,42 +133,42 @@ include irvine32.inc
     date_option6   BYTE  "11 October 2025 ",0
     date_option7   BYTE  "2 November 2025 ",0
     date_option8   BYTE  "23 November 2025 ",0
-    date_option9  BYTE  "24 December 2025 ",0
+    date_option9   BYTE  "24 December 2025 ",0
 
     date_table  dword OFFSET date_option0,OFFSET date_option1, OFFSET date_option2, OFFSET date_option3, OFFSET date_option4, OFFSET date_option5, OFFSET date_option6, OFFSET date_option7,OFFSET date_option8, OFFSET date_option9 
 
-    receipt_booking BYTE  100 DUP(0) 
-    receipt_class   BYTE  100 DUP(0)
-    receipt_baggage BYTE  "Baggage weight",09h,0
-    receipt_date    BYTE  100 DUP(0)
-    receipt_pax	    BYTE  "pax ",0
-    receipt_tax     BYTE  "Tax: ",09h,0
+    receipt_booking  BYTE  100 DUP(0) 
+    receipt_class    BYTE  100 DUP(0)
+    receipt_baggage  BYTE  "Baggage weight",09h,0
+    receipt_date     BYTE  100 DUP(0)
+    receipt_pax	     BYTE  "pax ",0
+    receipt_tax      BYTE  "Tax: ",09h,0
     receipt_discount BYTE  "Discount: ",09h,0
-    receipt_total   BYTE  "Total: ",09h,0
+    receipt_total    BYTE  "Total: ",09h,0
     receipt_date_msg BYTE  "Flight Date: ",0
-    receipt_name    BYTE    "Name",0
-    receipt_passport BYTE   "PassportID",0
+    receipt_name     BYTE  "Name",0
+    receipt_passport BYTE  "PassportID",0
 
     payment_menu     BYTE  "Select Payment Method:",0dh,0ah,
                            "1. Online Banking",0dh,0ah,
                            "2. Credit/Debit Card",0dh,0ah,
                            "Choice[1-2]: ",0
+
     online_banking_msg BYTE "Processing payment via Online Banking...",0dh,0ah,0
-    credit_debit_msg  BYTE "Processing payment via Credit/Debit Card...",0dh,0ah,0
+    credit_debit_msg   BYTE "Processing payment via Credit/Debit Card...",0dh,0ah,0
     payment_success_msg BYTE "Payment Successful!",0dh,0ah,0
 
 
 .code
 main proc
+
 menu_loop:
     lea edx, logo
     call writestring
     call crlf
-    mov edx, OFFSET main_menu 
-    call WriteString
-    call randomizer
+    lea edx, main_menu 
+    call writestring
     
-    ; Get choice
     call ReadDec
     cmp eax, 1
     je register
@@ -187,14 +176,14 @@ menu_loop:
     je login
     cmp eax, 3
     je exit_program
-    mov edx, OFFSET invalid_choice
-    call WriteString
+    lea edx, invalid_choice
+    call writestring
     jmp menu_loop
 
 register:
     ; Get User ID
-    mov edx, OFFSET reg_id_prompt
-    call WriteString
+    mov edx, OFFSET id_prompt
+    call writestring
     call ReadDec
     
     ; Check if 4 digits (1000-9999)
@@ -216,13 +205,13 @@ check_existing:
     jmp check_existing
     
 id_exists:
-    mov edx, OFFSET exists_msg
-    call WriteString
+    lea edx, exists_msg
+    call writestring
     jmp menu_loop
     
 invalid_input:
-    mov edx, OFFSET invalid_msg
-    call WriteString
+    lea edx, invalid_msg
+    call writestring
     jmp menu_loop
     
 id_ok:
@@ -231,8 +220,8 @@ id_ok:
     mov user_ids[ebx*4], eax
     
     ; Get Password
-    mov edx, OFFSET reg_pw_prompt
-    call WriteString
+    lea edx, pw_prompt
+    call writestring
     call ReadDec
     
     ; Check if 4 digits
@@ -245,20 +234,20 @@ id_ok:
     mov passwords[ebx*4], eax
     inc user_count
     
-    mov edx, OFFSET success_msg
+    lea edx, success_msg
     call WriteString
     jmp menu_loop
 
 login:
     ; Get User ID
-    mov edx, OFFSET login_id_prompt
-    call WriteString
+    lea edx, id_prompt
+    call writestring
     call ReadDec
     mov ebx, eax    ; Save ID for comparison
     
     ; Get Password
-    mov edx, OFFSET login_pw_prompt
-    call WriteString
+    lea edx, pw_prompt
+    call writestring
     call ReadDec
     
     ; Search for match
@@ -278,25 +267,21 @@ next_user:
     jmp search_loop
 
 login_fail:
-    mov edx, OFFSET fail_msg
-    call WriteString
+    lea edx, fail_msg
+    call writestring
     jmp menu_loop
     
 login_success:
-    mov edx, OFFSET success_msg
-    call WriteString
+    lea edx, success_msg
+    call writestring
 
-
-    
-    ; After successful login, show user menu
 usermenu:
     lea edx, logo
     call writestring
     call crlf
-    mov edx, OFFSET user_menu
-    call WriteString
+    lea edx, user_menu
+    call writestring
     
-    ; Get user choice
     call ReadDec
     cmp eax, 1
     je flight_selection
@@ -305,25 +290,24 @@ usermenu:
     cmp eax, 3
     je make_payment
     cmp eax, 4
-    je menu_loop  ; Return to main menu
-    mov edx, OFFSET invalid_choice
-    call WriteString
+    je menu_loop  
+    lea edx, invalid_choice
+    call writestring
     jmp usermenu
 
 flight_selection:
     lea edx, logo
     call writestring
     call crlf
-    mov edx, OFFSET flight_menu
-    call WriteString
+    lea edx, flight_menu
+    call writestring
     call randomizer
     mov esi, OFFSET options
     mov ecx, 4
     call printbookloop
     lea edx, choice_menu
-    call WriteString
+    call writestring
 
-    ;Get user choice
     call ReadDec      ;1 to 4
     dec eax           ;0 to 3
     cmp eax,4
@@ -335,16 +319,14 @@ flight_selection:
     jmp flightprice
 
 flight_error_msg:
-    mov edx, OFFSET invalid_choice
-    call WriteString
+    lea edx, invalid_choice
+    call writestring
     jmp flight_selection
     
-
 back_usermenu:
     jmp usermenu
 
 flightprice:
-    
     mov esi,OFFSET options
     movzx eax, byte ptr [esi+ecx]  ; get option number (0–9)
     mov user_input,eax
@@ -375,10 +357,9 @@ class_selection:
     lea edx, logo
     call writestring
     call crlf
-    mov edx, OFFSET class_menu
-    call WriteString
+    lea edx, class_menu
+    call writestring
     
-    ;Get user choice
     call ReadDec
     cmp eax,1
     je classprice1
@@ -390,8 +371,8 @@ class_selection:
     je classprice4
     cmp eax,5
     je back_flight_selection
-    mov edx, OFFSET invalid_choice
-    call WriteString
+    lea edx, invalid_choice
+    call writestring
     jmp class_selection
 
 back_flight_selection:
@@ -446,8 +427,8 @@ baggage_selection:
     je baggageprice4
     cmp eax,5
     je back_class_selection
-    mov edx, OFFSET invalid_choice
-    call WriteString
+    lea edx, invalid_choice
+    call writestring
     jmp baggage_selection
 
 back_class_selection:
@@ -497,12 +478,11 @@ baggage_error_msg:
     call writestring
     jmp baggageprice4
 
-
 date_selection:
     lea edx, logo
     call writestring
     call crlf
-    mov edx, OFFSET date_menu
+    lea edx, date_menu
     call WriteString
     call randomizer
     mov esi, OFFSET options
@@ -511,7 +491,6 @@ date_selection:
     lea edx, choice_menu
     call WriteString
     
-    ;Get user choice
     call ReadDec      ;1 to 4
     dec eax           ;0 to 3
     cmp eax,4
@@ -520,9 +499,7 @@ date_selection:
     ja date_error_msg
     mov ecx,eax
     mov user_input,eax
-    jmp date
-    
-    
+    jmp date   
 
 date_error_msg:
     mov edx, OFFSET invalid_choice
@@ -546,35 +523,34 @@ number_of_tickets:
     lea edx, logo
     call writestring
     call crlf
-    mov edx, OFFSET ticket_menu
-    call WriteString
+    lea edx, ticket_menu
+    call writestring
     
-    ;Get user choice
     call ReadDec
     cmp eax,0
     je ticket_error_msg
     mov ticket_input,eax
     mov esi,0
-    jmp enter_credenstial
+    jmp enter_credential
 
 ticket_error_msg:
     lea edx, ticket_error
     jmp number_of_tickets
     
-enter_credenstial:
+enter_credential:
     cmp esi,ticket_input        
     jge membership_selection
 
-    mov edx, OFFSET name_menu
-    call WriteString
+    lea edx, name_menu
+    call writestring
     mov eax,esi
     imul eax,20
     lea edx,nameArray[eax]
     mov ecx,20
     call readstring
 
-    mov edx, OFFSET passport_menu
-    call WriteString
+    lea edx, passport_menu
+    call writestring
     mov eax,esi
     imul eax,20
     lea edx,passportArray[eax]
@@ -582,22 +558,21 @@ enter_credenstial:
     call readstring
 
     inc esi
-    jmp enter_credenstial
+    jmp enter_credential
 
 membership_selection:
     lea edx, logo
     call writestring
-    mov edx, OFFSET membership_menu
-    call WriteString
-    
-    ;Get user choice
+    lea edx, membership_menu
+    call writestring
+
     call ReadDec
     cmp eax,1
     je membership_validation
     cmp eax,2
     je membership_no
-    mov edx, OFFSET invalid_choice
-    call WriteString
+    lea edx, invalid_choice
+    call writestring
     jmp membership_selection
 
 membership_no:
@@ -606,8 +581,8 @@ membership_no:
     jmp calc_total_price
 
 membership_validation:
-    mov edx, OFFSET membership_prompt
-    call WriteString
+    lea edx, membership_prompt
+    call writestring
     call membership_validation_check
     mov eax,discount_rate
     cmp eax,0
@@ -620,18 +595,17 @@ book_new:
     lea edx, logo
     call writestring
     call crlf
-    mov edx, OFFSET book_new_menu
-    call WriteString
+    lea edx, book_new_menu
+    call writestring
 
-    ;Get user choice
     call ReadDec
     cmp eax,1
     mov selection,1
     je flight_selection
     cmp eax,2
     je usermenu
-    mov edx, OFFSET invalid_choice
-    call WriteString
+    lea edx, invalid_choice
+    call writestring
     jmp book_new
 
 calc_total_price:
@@ -684,23 +658,21 @@ adjust_final_price:
     mov final_price, eax
     jmp usermenu
 
-
 view_booking_details:
     lea edx, logo
     call writestring
     call crlf
-
-    mov edx, OFFSET receipt_date_msg
-    call WriteString
-    mov edx, OFFSET receipt_date
-    call WriteString
+    lea edx, receipt_date_msg
+    call writestring
+    lea edx, receipt_date
+    call writestring
     call crlf
-    mov edx, OFFSET receipt_booking
-    call WriteString
+    lea edx, receipt_booking
+    call writestring
     mov eax, ticket_input
     call Writedec
-    mov edx, OFFSET receipt_pax
-    call WriteString
+    lea edx, receipt_pax
+    call writestring
     lea edx,tabline
     call writestring
     lea edx,RM
@@ -711,17 +683,17 @@ view_booking_details:
     mov al,'.'
     call WriteChar
     mov eax,flight_price_floating_point             ;eax = floating point number
-    call writeDec
-    call writeDec
+    call writedec
+    call writedec
     call crlf
-    mov edx, OFFSET receipt_class
-    call WriteString
+    lea edx, receipt_class
+    call writestring
     lea edx,tabline
-    call writeString
+    call writestring
     mov eax, ticket_input
-    call Writedec
-    mov edx, OFFSET receipt_pax
-    call WriteString
+    call writedec
+    lea edx, receipt_pax
+    call writestring
     lea edx,tabline
     call writestring
     lea edx,RM
@@ -732,8 +704,8 @@ view_booking_details:
     mov al,'.'
     call WriteChar
     mov eax,class_price_floating_point             ;eax = floating point number
-    call writeDec
-    call writeDec
+    call writedec
+    call writedec
     call crlf
     lea edx, receipt_baggage
     call writestring
@@ -761,7 +733,7 @@ view_booking_details:
     call writedec
     call writedec
     call crlf
-    mov edx, OFFSET receipt_tax
+    lea edx, receipt_tax
     call writestring
     lea edx,tabline
     call writestring
@@ -773,13 +745,13 @@ view_booking_details:
     mov eax, tax_price
     call WriteDec
     mov al,'.'
-    call WriteChar
+    call writechar
     mov eax,tax_floating_point             ;eax = floating point number
-    call writeDec
-    call writeDec
+    call writedec
+    call writedec
     call crlf
-    mov edx, OFFSET receipt_discount
-    call WriteString
+    lea edx, receipt_discount
+    call writestring
     lea edx,tabline
     call writestring
     call writestring
@@ -787,14 +759,14 @@ view_booking_details:
     lea edx,RM
     call writestring
     mov eax, discount_price
-    call WriteDec
+    call writedec
     mov al,'.'
-    call WriteChar
+    call writechar
     mov eax,discount_floating_point             
     call adjust_discount_floating_point
     call crlf
-    mov edx, OFFSET receipt_total
-    call WriteString
+    lea edx, receipt_total
+    call writestring
     lea edx,tabline
     call writestring
     call writestring
@@ -803,9 +775,9 @@ view_booking_details:
     lea edx,RM
     call writestring
     mov eax, final_price
-    call WriteDec
+    call writedec
     mov al,'.'
-    call WriteChar
+    call writechar
     mov eax,final_price_floating_point             
     call adjust_final_floating_point
     call crlf
@@ -817,28 +789,25 @@ make_payment:
     lea edx, logo
     call writestring
     call crlf
-
-    ; Display total price
-    mov edx, OFFSET receipt_total
-    call WriteString
-    lea edx, tabline
+    lea edx, receipt_total
+    call writestring
+    lea edx,tabline
     call writestring
     call writestring
     call writestring
     call writestring
-    lea edx, RM
+    lea edx,RM
     call writestring
     mov eax, final_price
-    call WriteDec
-    mov al, '.'
-    call WriteChar
-    mov eax, final_price_floating_point
-    call WriteDec
-    call crlf
+    call writedec
+    mov al,'.'
+    call writechar
+    mov eax,final_price_floating_point             
+    call adjust_final_floating_point
     call crlf
 
     ; Display payment method menu
-    mov edx, OFFSET payment_menu
+    lea edx, payment_menu
     call WriteString
 
     ; Get user choice
@@ -849,34 +818,34 @@ make_payment:
     je credit_debit_card
     cmp eax, 5
     je usermenu
-    mov edx, OFFSET invalid_choice
-    call WriteString
+    lea edx, invalid_choice
+    call writestring
     jmp make_payment
 
     online_banking:
-    mov edx, OFFSET online_banking_msg
-    call WriteString
+    lea edx, online_banking_msg
+    call writestring
     jmp process_payment
 
 credit_debit_card:
-    mov edx, OFFSET credit_debit_msg
-    call WriteString
+    lea edx, credit_debit_msg
+    call writestring
     jmp process_payment
 
 process_payment:
     ; Simulate payment processing
-    mov edx, OFFSET payment_success_msg
-    call WriteString
+    lea edx, payment_success_msg
+    call writestring
     call crlf
     jmp usermenu
 
 
 exit_program:
     exit
-    
-main endp
+    main endp
 
 copystring proc
+
 CopyLoop:
     mov al, [esi]           ; Load a byte from source
     mov [edi], al           ; Store it in destination
@@ -888,6 +857,7 @@ CopyLoop:
 copystring endp
 
 randomizer proc
+
     call Randomize
     xor ecx, ecx                    ; counter for stored values
 GenLoop:
@@ -930,22 +900,23 @@ printbookingloop:
     inc ax
     mov selection,al
     mov al,'.'
-    call WriteChar
+    call writechar
     movzx eax, byte ptr [esi]  ; get option number (0–9)
     mov ebx, OFFSET booking_table
     mov edx, [ebx + eax*4]     ; load pointer to message
-    call WriteString
+    call writestring
     lea edx,RM
     call writestring
     mov ebx, OFFSET flight_price_table
     mov eax,[ebx+eax*4]
     call writedec
-    call Crlf
+    call crlf
 
     inc esi
     loop printbookingloop
     mov selection,1
     ret
+
 printbookloop endp
 
 printdateloop proc
@@ -957,16 +928,17 @@ printdatesloop:
     inc ax
     mov selection,al
     mov al,'.'
-    call WriteChar
+    call writechar
     movzx eax, byte ptr [esi]  ; get option number (0–9)
     mov ebx, OFFSET date_table
     mov edx, [ebx + eax*4]     ; load pointer to message
-    call WriteString
-    call Crlf
+    call writestring
+    call crlf
 
     inc esi
     loop printdatesloop
     ret
+
 printdateloop endp
 
 printreceiptnameandpassport proc
@@ -976,34 +948,33 @@ output_loop:
     jge return
 
     ; Print Name
-    mov edx, OFFSET receipt_name
-    call WriteString
+    lea edx, receipt_name
+    call writestring
     mov eax, esi
     inc eax
-    call WriteDec
+    call writedec
     lea edx,tabline
     call writestring
     call writestring
     mov eax, esi
     imul eax, 20
     lea edx, nameArray[eax]
-    call WriteString
+    call writestring
     call crlf
     
-
     ; Print Passport
-    mov edx, OFFSET receipt_passport
-    call WriteString
+    lea edx, receipt_passport
+    call writestring
     mov eax, esi
     inc eax
-    call WriteDec
+    call writedec
     lea edx,tabline
     call writestring
     mov eax, esi
     imul eax, 20
     lea edx, passportArray[eax]
-    call WriteString
-    call Crlf
+    call writestring
+    call crlf
 
     inc esi
     jmp output_loop
@@ -1016,14 +987,14 @@ printreceiptnameandpassport endp
 membership_validation_check proc
 
     mov member_found, 0   
-    mov edx, OFFSET member_input
+    lea edx, member_input
     mov ecx, 100
     call ReadString
 
     mov esi, OFFSET memberships
 
 CheckLoop:
-    cmp byte ptr [esi], 0
+    cmp byte ptr [esi], "!"
     je CheckResult  ; End of membership list
 
     mov edi, OFFSET member_input
@@ -1055,20 +1026,14 @@ CheckResult:
     je membership_yes
 
     ; No match found
-    mov edx, OFFSET membership_error
-    call WriteString
-    jmp membership_no
+    lea edx, membership_error
+    call writestring
+    ret
 
 membership_yes:
     mov eax,5
     mov discount_rate,eax
     ret
-
-membership_no:
-    mov eax,0
-    mov discount_rate,eax
-    ret
-    
 
 membership_validation_check endp
 
@@ -1092,6 +1057,7 @@ strings_equal:
 not_equal:
     mov eax, 1           ; return 1 = not equal
     ret
+
 compare_strings endp
 
 adjust_discount_floating_point proc
