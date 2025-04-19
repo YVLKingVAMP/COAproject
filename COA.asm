@@ -20,8 +20,8 @@ include irvine32.inc
     discount_price DWORD   0            ;total price * discount rate
     tax_price      DWORD   0            ;total price * tax rate
     final_price    DWORD   0            ;total price after tax - discount rate
-    discount_floating_point      DWORD   0            
-    tax_floating_point           DWORD   0            
+    discount_price_floating_point DWORD   0            
+    tax_price_floating_point     DWORD   0            
     flight_price_floating_point  DWORD   0            
     class_price_floating_point   DWORD   0            
     baggage_price_floating_point DWORD   0
@@ -33,7 +33,7 @@ include irvine32.inc
     selection      BYTE    1
     var            DWORD   0
     user_input     DWORD   0
-    memberships    BYTE   "TMURAT1",0,"TMURAT2",0,"TMURAT3",0,"!",0
+    memberships    BYTE   "TMURAT1",0,"TMURAT2",0,"TMURAT3",0,"1",0,"!",0
     member_input   BYTE    100 DUP(?)
     member_found   DWORD   0
 
@@ -63,7 +63,7 @@ include irvine32.inc
                            "Choice[1-4]: ",0
 
     flight_menu     BYTE   "Please select a flight: ",0dh,0ah,0
-    choice_menu     BYTE   "Choice[1-4]: ",0
+    choice_prompt    BYTE   "Choice[1-4]: ",0
                            
     class_menu       BYTE  "Please select a class: ",0dh,0ah,
                            "1. Economy           RM0",0dh,0ah,
@@ -79,13 +79,13 @@ include irvine32.inc
                            "4. >10kg RM50 + (extra RM10 for every kg)",0dh,0ah,
                            "Choice[1-4]: ",0
 
-    baggage_manual   BYTE  "Please enter extra baggage weight(max 50kg): ",0
+    baggage_prompt   BYTE  "Please enter extra baggage weight(max 50kg): ",0
     baggage_error    BYTE  "Invalid weight",0dh,0ah,0
     ticket_error     BYTE  "Please enter at least 1",0
-    date_menu        BYTE  "Please select a date: ",0dh,0ah,0
-    ticket_menu      BYTE  "Please enter number of tickets: ",0
-    name_menu        BYTE  "Please enter name: ",0
-    passport_menu    BYTE  "Please enter passportID: ",0
+    date_prompt      BYTE  "Please select a date: ",0dh,0ah,0
+    ticket_prompt    BYTE  "Please enter number of tickets: ",0
+    name_prompt      BYTE  "Please enter name: ",0
+    passport_prompt  BYTE  "Please enter passportID: ",0
 
     membership_menu  BYTE  "Do you have membership? ",0dh,0ah,
                            "1. Yes",0dh,0ah,
@@ -158,6 +158,18 @@ include irvine32.inc
     credit_debit_msg   BYTE "Processing payment via Credit/Debit Card...",0dh,0ah,0
     payment_success_msg BYTE "Payment Successful!",0dh,0ah,0
 
+    online_bank_id_prompt  BYTE "Enter Bank ID (up to 12 characters): ",0
+    online_password_prompt BYTE "Enter Password (up to 11 characters): ",0
+    card_number_prompt     BYTE "Enter Card Number (16 digits): ",0
+    cvv_prompt             BYTE "Enter CVV (3 digits): ",0
+    bank_id        BYTE 13 DUP(?)  ; 12 chars + null
+    bank_password  BYTE 12 DUP(?)  ; 11 chars + null
+    card_number    BYTE 17 DUP(?)  ; 16 digits + null
+    cvv            BYTE 4 DUP(?)   ; 3 digits + null
+    bank_id_length_error   BYTE "Bank ID must be 6-12 characters!",0dh,0ah,0
+    password_length_error  BYTE "Password must be 6-11 characters!",0dh,0ah,0
+    card_number_error      BYTE "Card number must be exactly 16 digits!",0dh,0ah,0
+    cvv_error              BYTE "CVV must be exactly 3 digits!",0dh,0ah,0
 
 .code
 main proc
@@ -305,7 +317,7 @@ flight_selection:
     mov esi, OFFSET options
     mov ecx, 4
     call printbookloop
-    lea edx, choice_menu
+    lea edx, choice_prompt
     call writestring
 
     call ReadDec      ;1 to 4
@@ -313,7 +325,7 @@ flight_selection:
     cmp eax,4
     je back_usermenu
     cmp eax,5
-    ja flight_error_msg
+    jge flight_error_msg
     mov ecx,eax
     mov user_input,eax
     jmp flightprice
@@ -455,7 +467,7 @@ baggageprice3:
 baggageprice4:
     mov eax,50
     mov baggage_price,eax
-    lea edx, baggage_manual
+    lea edx, baggage_prompt
     call writestring
     call ReadDec
     cmp eax,50
@@ -482,13 +494,13 @@ date_selection:
     lea edx, logo
     call writestring
     call crlf
-    lea edx, date_menu
+    lea edx, date_prompt
     call WriteString
     call randomizer
     mov esi, OFFSET options
     mov ecx, 4
     call printdateloop
-    lea edx, choice_menu
+    lea edx, choice_prompt
     call WriteString
     
     call ReadDec      ;1 to 4
@@ -496,7 +508,7 @@ date_selection:
     cmp eax,4
     je baggage_selection
     cmp eax,5
-    ja date_error_msg
+    jge date_error_msg
     mov ecx,eax
     mov user_input,eax
     jmp date   
@@ -523,7 +535,7 @@ number_of_tickets:
     lea edx, logo
     call writestring
     call crlf
-    lea edx, ticket_menu
+    lea edx, ticket_prompt
     call writestring
     
     call ReadDec
@@ -541,7 +553,7 @@ enter_credential:
     cmp esi,ticket_input        
     jge membership_selection
 
-    lea edx, name_menu
+    lea edx, name_prompt
     call writestring
     mov eax,esi
     imul eax,20
@@ -549,7 +561,7 @@ enter_credential:
     mov ecx,20
     call readstring
 
-    lea edx, passport_menu
+    lea edx, passport_prompt
     call writestring
     mov eax,esi
     imul eax,20
@@ -621,41 +633,45 @@ calc_tax_price:
     mov eax, tax_rate                   ;eax = taxrate
     mul total_price                     ;eax = taxrate * ((flight price + class price + baggage price) * number of tickets)
     mov ebx,100
-    div ebx                             
-    mov final_price_floating_point,edx
+    div ebx                               
+    mov tax_price_floating_point,edx
     mov tax_price,eax                   ;tax price = taxrate * ((flight price + class price + baggage price) * number of tickets)
     add eax,total_price                 ;eax = tax price + total price
     mov total_price_after_tax,eax       ;total price = tax price + total price
     jmp calc_discount_price
 
 calc_discount_price:
-    mov eax, discount_rate              ;eax = discountrate
-    mul total_price_after_tax           ;eax = discountrate * (((flight price + class price) * number of tickets)+tax price)
-    mov ebx,100
-    div ebx                             
-    mov final_price_floating_point,edx
-    mov discount_floating_point,edx
+    mov eax, total_price_after_tax 
+    mov ebx, 100
+    mul ebx
+    add eax, tax_price_floating_point
+    mul discount_rate
+    div ebx
+    div ebx
+    mov discount_price_floating_point,edx
     mov discount_price,eax              ;discount price = discountrate * ((flight price + class price) * number of tickets)
     jmp calc_final_price
 
 calc_final_price:
-    mov eax, total_price_after_tax      ;eax = total price + tax price
-    sub eax, discount_price             ;eax = total price + tax price - discount price
-    mov final_price, eax                ;final price = total price + tax price - discount price
-    cmp final_price_floating_point,0
-    ja adjust_floating_point
-    jmp usermenu
-
-adjust_floating_point:
-    mov eax, 100
-    sub eax,final_price_floating_point
-    mov final_price_floating_point,eax
-    jmp adjust_final_price
     
-adjust_final_price:
-    mov eax, final_price
-    sub eax, 1
-    mov final_price, eax
+    mov eax, total_price_after_tax 
+    mov ebx, 100
+    mul ebx
+    add eax, tax_price_floating_point
+    mov total_price_after_tax,eax
+    mov eax, discount_price 
+    mul ebx
+    add eax, discount_price_floating_point
+    mov discount_price,eax
+    mov eax, total_price_after_tax
+    sub eax, discount_price             ;eax = total price + tax price - discount price
+    div ebx
+    mov final_price, eax                ;final price = total price + tax price - discount price
+    mov final_price_floating_point, edx
+    xor edx,edx
+    mov eax, discount_price
+    div ebx
+    mov discount_price, eax
     jmp usermenu
 
 view_booking_details:
@@ -746,9 +762,8 @@ view_booking_details:
     call WriteDec
     mov al,'.'
     call writechar
-    mov eax,tax_floating_point             ;eax = floating point number
-    call writedec
-    call writedec
+    mov eax,tax_price_floating_point             
+    call adjust_tax_floating_point
     call crlf
     lea edx, receipt_discount
     call writestring
@@ -762,7 +777,7 @@ view_booking_details:
     call writedec
     mov al,'.'
     call writechar
-    mov eax,discount_floating_point             
+    mov eax,discount_price_floating_point             
     call adjust_discount_floating_point
     call crlf
     lea edx, receipt_total
@@ -822,12 +837,14 @@ make_payment:
     call writestring
     jmp make_payment
 
-    online_banking:
+online_banking:
+    call get_online_banking_details
     lea edx, online_banking_msg
     call writestring
     jmp process_payment
 
 credit_debit_card:
+    call get_credit_card_details
     lea edx, credit_debit_msg
     call writestring
     jmp process_payment
@@ -839,11 +856,93 @@ process_payment:
     call crlf
     jmp usermenu
 
-
 exit_program:
     exit
     main endp
 
+get_online_banking_details proc
+bank_id_input:
+    lea edx, online_bank_id_prompt
+    call writestring
+    mov edx, OFFSET bank_id
+    mov ecx, SIZEOF bank_id
+    call ReadString
+    mov ecx, eax  ; Store actual length in ECX
+    
+    ; Validate bank ID length (6-12 chars)
+    mov ebx, 6      ; min
+    mov edi, 12     ; max
+    call validate_length_range
+    jnc password_input
+    lea edx, bank_id_length_error
+    call writestring
+    jmp bank_id_input
+
+password_input:
+    lea edx, online_password_prompt
+    call writestring
+    mov edx, OFFSET bank_password
+    mov ecx, 11              ; Max 11 chars
+    mov ebx, 0               ; String mode
+    mov ecx, eax             ; Store length in ECX
+    
+    ; Validate password length (6-11 chars)
+    mov ebx, 6               ; min
+    mov edi, 11              ; max
+    call validate_length_range
+    jnc done
+    lea edx, password_length_error
+    call writestring
+    jmp password_input
+
+done:
+    ret
+get_online_banking_details endp
+
+get_credit_card_details proc
+card_number_input:
+    lea edx, card_number_prompt
+    call writestring
+    mov edx, OFFSET card_number
+    mov ecx, SIZEOF card_number
+    call ReadString
+    
+    ; Validate card number (exactly 16 digits)
+    cmp eax, 16
+    jne invalid_card
+    mov ecx, eax  ; Set length for digit check
+    call validate_digits
+    jnc cvv_input
+
+invalid_card:
+    lea edx,card_number_error
+    call writestring
+    jmp card_number_input
+
+cvv_input:
+    lea edx,cvv_prompt
+    call writeString
+    mov edx, OFFSET cvv
+    mov ecx, SIZEOF cvv
+    call ReadString
+    
+    ; Validate CVV (exactly 3 digits)
+    cmp eax, 3
+    jne invalid_cvv
+    mov ecx, eax  ; Set length for digit check
+    call validate_digits
+    jnc done
+
+invalid_cvv:
+    lea edx, cvv_error
+    call writestring
+    jmp cvv_input
+
+done:
+    ret
+get_credit_card_details endp
+
+;A function to copy a string from one variable to another
 copystring proc
 
 CopyLoop:
@@ -854,8 +953,11 @@ CopyLoop:
     cmp al, 0               ; Check for null terminator
     jne CopyLoop            ; If not null, keep copying
     ret
+
 copystring endp
 
+;A function to generate 4 random numbers and store them in the options array
+;No duplicate numbers are stored
 randomizer proc
 
     call Randomize
@@ -894,9 +996,8 @@ randomizer endp
 printbookloop proc
 
 printbookingloop:
-    movzx eax,selection
-    call writedec
     movzx ax,selection
+    call writedec
     inc ax
     mov selection,al
     mov al,'.'
@@ -922,9 +1023,8 @@ printbookloop endp
 printdateloop proc
 
 printdatesloop:
-    movzx eax,selection
-    call writedec
     movzx ax,selection
+    call writedec
     inc ax
     mov selection,al
     mov al,'.'
@@ -937,6 +1037,7 @@ printdatesloop:
 
     inc esi
     loop printdatesloop
+    mov selection,1
     ret
 
 printdateloop endp
@@ -988,9 +1089,7 @@ membership_validation_check proc
 
     mov member_found, 0   
     lea edx, member_input
-    mov ecx, 100
     call ReadString
-
     mov esi, OFFSET memberships
 
 CheckLoop:
@@ -1037,6 +1136,7 @@ membership_yes:
 
 membership_validation_check endp
 
+;A function to compare two strings ("x" == "y")
 compare_strings proc
 
 compare_loop:
@@ -1060,17 +1160,33 @@ not_equal:
 
 compare_strings endp
 
-adjust_discount_floating_point proc
+adjust_tax_floating_point proc
 
     cmp eax,0
     ja adjust
-    mov eax,discount_floating_point
+    mov eax,tax_price_floating_point
     call writedec
     call writedec
     ret
 
 adjust:
-    mov eax,discount_floating_point
+    mov eax,tax_price_floating_point
+    call writedec
+    ret
+
+adjust_tax_floating_point endp
+
+adjust_discount_floating_point proc
+
+    cmp eax,0
+    ja adjust
+    mov eax,discount_price_floating_point
+    call writedec
+    call writedec
+    ret
+
+adjust:
+    mov eax,discount_price_floating_point
     call writedec
     ret
 
@@ -1091,5 +1207,43 @@ adjust:
     ret
 
 adjust_final_floating_point endp
+
+validate_digits proc
+    push esi
+    mov esi, edx        ; Point to start of string
+    
+digit_check_loop:
+    mov al, [esi]       ; Get current character
+    cmp al, 0           ; Check for null terminator (if length was wrong)
+    je  invalid_digit_found
+    
+    cmp al, '0'
+    jl  invalid_digit_found
+    cmp al, '9'
+    jg  invalid_digit_found
+    
+    inc esi
+    loop digit_check_loop
+    
+    pop esi
+    clc                 ; Clear carry flag (valid)
+    ret
+
+invalid_digit_found:
+    pop esi
+    stc                 ; Set carry flag (invalid)
+    ret
+validate_digits endp
+validate_length_range proc
+    cmp ecx, ebx
+    jl  invalid_len_range     ; Length < min_length
+    cmp ecx, edi
+    jg  invalid_len_range     ; Length > max_length
+    clc                       ; Clear CF (valid)
+    ret
+invalid_len_range:
+    stc                       ; Set CF (invalid)
+    ret
+validate_length_range endp
 
 end main
